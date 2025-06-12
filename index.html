@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <title>Simulador Benchrest 25m Profissional</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+      color: #333;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 20px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+    
+    .header {
+      background: linear-gradient(45deg, #2c3e50, #34495e);
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+    
+    .header h1 {
+      font-size: 2.5em;
+      margin-bottom: 10px;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    }
+    
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      padding: 20px;
+      background: #f8f9fa;
+    }
+    
+    .control-group {
+      background: white;
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .control-group h3 {
+      color: #2c3e50;
+      margin-bottom: 15px;
+      font-size: 1.2em;
+      border-bottom: 2px solid #3498db;
+      padding-bottom: 5px;
+    }
+    
+    .input-row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+      gap: 10px;
+    }
+    
+    .input-row label {
+      flex: 1;
+      font-weight: 500;
+      color: #555;
+    }
+    
+    .input-row input, .input-row select {
+      flex: 1;
+      padding: 8px 12px;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      transition: border-color 0.3s;
+    }
+    
+    .input-row input:focus, .input-row select:focus {
+      outline: none;
+      border-color: #3498db;
+    }
+    
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+    }
+    
+    button {
+      flex: 1;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    .btn-fire {
+      background: linear-gradient(45deg, #e74c3c, #c0392b);
+      color: white;
+      box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
+    }
+    
+    .btn-fire:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(231, 76, 60, 0.6);
+    }
+    
+    .btn-clear {
+      background: linear-gradient(45deg, #95a5a6, #7f8c8d);
+      color: white;
+    }
+    
+    .btn-clear:hover {
+      transform: translateY(-2px);
+      background: linear-gradient(45deg, #7f8c8d, #95a5a6);
+    }
+    
+    .btn-stats {
+      background: linear-gradient(45deg, #3498db, #2980b9);
+      color: white;
+    }
+    
+    .btn-stats:hover {
+      transform: translateY(-2px);
+      background: linear-gradient(45deg, #2980b9, #3498db);
+    }
+    
+    .main-content {
+      display: grid;
+      grid-template-columns: 1fr 300px;
+      gap: 20px;
+      padding: 20px;
+    }
+    
+    .target-container {
+      background: white;
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+    
+    canvas {
+      border: 3px solid #2c3e50;
+      border-radius: 10px;
+      background: #fff;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+      transition: transform 0.3s;
+    }
+    
+    canvas:hover {
+      transform: scale(1.02);
+    }
+    
+    .stats-panel {
+      background: white;
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+    
+    .stats-panel h3 {
+      color: #2c3e50;
+      margin-bottom: 15px;
+      text-align: center;
+      font-size: 1.3em;
+    }
+    
+    .stat-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+      margin: 5px 0;
+      background: #f8f9fa;
+      border-radius: 8px;
+      border-left: 4px solid #3498db;
+    }
+    
+    .stat-value {
+      font-weight: bold;
+      color: #2c3e50;
+    }
+    
+    .shot-list {
+      max-height: 200px;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      margin-top: 15px;
+    }
+    
+    .shot-item {
+      padding: 8px 12px;
+      border-bottom: 1px solid #eee;
+      font-size: 0.9em;
+      display: flex;
+      justify-content: space-between;
+    }
+    
+    .shot-item:last-child {
+      border-bottom: none;
+    }
+    
+    .shot-item:nth-child(odd) {
+      background: #f8f9fa;
+    }
+    
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #27ae60;
+      color: white;
+      padding: 15px 20px;
+      border-radius: 8px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      transform: translateX(400px);
+      transition: transform 0.3s;
+      z-index: 1000;
+    }
+    
+    .notification.show {
+      transform: translateX(0);
+    }
+    
+    @media (max-width: 768px) {
+      .main-content {
+        grid-template-columns: 1fr;
+      }
+      
+      .controls {
+        grid-template-columns: 1fr;
+      }
+      
+      canvas {
+        width: 100%;
+        height: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🎯 Simulador Benchrest 25m Profissional</h1>
+      <p>Sistema avançado de simulação de tiro de precisão</p>
+    </div>
+    
+    <div class="controls">
+      <div class="control-group">
+        <h3>⚙️ Condições de Tiro</h3>
+        <div class="input-row">
+          <label>Distância (m):</label>
+          <input type="number" id="distance" value="25" min="10" max="100">
+        </div>
+        <div class="input-row">
+          <label>Vento Lateral (m/s):</label>
+          <input type="number" id="wind" value="1" step="0.1" min="-10" max="10">
+        </div>
+        <div class="input-row">
+          <label>Temperatura (°C):</label>
+          <input type="number" id="temperature" value="20" min="-20" max="50">
+        </div>
+        <div class="input-row">
+          <label>Humidade (%):</label>
+          <input type="number" id="humidity" value="60" min="0" max="100">
+        </div>
+      </div>
+      
+      <div class="control-group">
+        <h3>🔧 Ajustes da Arma</h3>
+        <div class="input-row">
+          <label>Desvio Horizontal (cm):</label>
+          <input type="number" id="offsetX" value="0" step="0.1" min="-20" max="20">
+        </div>
+        <div class="input-row">
+          <label>Desvio Vertical (cm):</label>
+          <input type="number" id="offsetY" value="0" step="0.1" min="-20" max="20">
+        </div>
+        <div class="input-row">
+          <label>Calibre:</label>
+          <select id="caliber">
+            <option value="22lr">.22 LR</option>
+            <option value="22wmr">.22 WMR</option>
+            <option value="17hmr">.17 HMR</option>
+            <option value="223rem">.223 Rem</option>
+          </select>
+        </div>
+        <div class="input-row">
+          <label>Peso Projétil (gr):</label>
+          <input type="number" id="bulletWeight" value="40" min="15" max="80">
+        </div>
+      </div>
+      
+      <div class="control-group">
+        <h3>🎮 Controles</h3>
+        <div class="button-group">
+          <button class="btn-fire" onclick="simulateShot()">🔥 Disparar</button>
+        </div>
+        <div class="button-group">
+          <button class="btn-clear" onclick="clearShots()">🗑️ Limpar</button>
+          <button class="btn-stats" onclick="toggleStats()">📊 Estatísticas</button>
+        </div>
+        <div class="input-row">
+          <label>Série de disparos:</label>
+          <input type="number" id="burstCount" value="1" min="1" max="10">
+          <button class="btn-fire" onclick="burstFire()" style="margin-left: 10px;">Série</button>
+        </div>
+      </div>
+    </div>
+    
+    <div class="main-content">
+      <div class="target-container">
+        <h3>Alvo 25m - Escala Real</h3>
+        <canvas id="targetCanvas" width="500" height="500"></canvas>
+        <div id="lastShotInfo" style="margin-top: 15px; font-size: 1.1em; font-weight: bold;"></div>
+      </div>
+      
+      <div class="stats-panel">
+        <h3>📈 Estatísticas da Sessão</h3>
+        <div class="stat-item">
+          <span>Total de Disparos:</span>
+          <span class="stat-value" id="totalShots">0</span>
+        </div>
+        <div class="stat-item">
+          <span>Grupo (cm):</span>
+          <span class="stat-value" id="groupSize">-</span>
+        </div>
+        <div class="stat-item">
+          <span>Média X:</span>
+          <span class="stat-value" id="avgX">-</span>
+        </div>
+        <div class="stat-item">
+          <span>Média Y:</span>
+          <span class="stat-value" id="avgY">-</span>
+        </div>
+        <div class="stat-item">
+          <span>Desvio Padrão:</span>
+          <span class="stat-value" id="stdDev">-</span>
+        </div>
+        <div class="stat-item">
+          <span>Melhor Disparo:</span>
+          <span class="stat-value" id="bestShot">-</span>
+        </div>
+        
+        <h4 style="margin-top: 20px; margin-bottom: 10px;">📋 Histórico de Disparos</h4>
+        <div class="shot-list" id="shotList"></div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="notification" id="notification"></div>
+
+  <script>
+    let shots = [];
+    let shotCounter = 0;
+    
+    // Características dos calibres
+    const caliberData = {
+      '22lr': { velocity: 320, bc: 0.125, weight: 40 },
+      '22wmr': { velocity: 460, bc: 0.150, weight: 40 },
+      '17hmr': { velocity: 550, bc: 0.125, weight: 17 },
+      '223rem': { velocity: 975, bc: 0.400, weight: 55 }
+    };
+    
+    function drawTarget(ctx) {
+      ctx.clearRect(0, 0, 500, 500);
+      
+      // Fundo do alvo
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, 500, 500);
+      
+      // Anéis de pontuação (escala real para 25m)
+      const center = { x: 250, y: 250 };
+      const rings = [
+        { radius: 200, color: '#000', width: 2, score: '1' },
+        { radius: 160, color: '#000', width: 2, score: '2' },
+        { radius: 120, color: '#000', width: 2, score: '3' },
+        { radius: 80, color: '#000', width: 2, score: '4' },
+        { radius: 40, color: '#000', width: 2, score: '5' },
+        { radius: 20, color: '#000', width: 3, score: '6' },
+        { radius: 10, color: '#000', width: 2, score: '7' },
+        { radius: 5, color: '#000', width: 2, score: '8' }
+      ];
+      
+      // Desenhar anéis
+      rings.forEach((ring, index) => {
+        ctx.beginPath();
+        ctx.arc(center.x, center.y, ring.radius, 0, 2 * Math.PI);
+        ctx.strokeStyle = ring.color;
+        ctx.lineWidth = ring.width;
+        ctx.stroke();
+        
+        // Números de pontuação
+        if (index < rings.length - 2) {
+          ctx.fillStyle = '#333';
+          ctx.font = 'bold 14px Arial';
+          ctx.textAlign = 'center';
+          ctx.fillText(ring.score, center.x + ring.radius - 15, center.y - ring.radius + 20);
+        }
+      });
+      
+      // Centro de ouro
+      ctx.beginPath();
+      ctx.arc(center.x, center.y, 5, 0, 2 * Math.PI);
+      ctx.fillStyle = '#ffd700';
+      ctx.fill();
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      
+      // Mira em cruz (verde)
+      ctx.strokeStyle = '#00ff00';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(center.x - 15, center.y);
+      ctx.lineTo(center.x + 15, center.y);
+      ctx.moveTo(center.x, center.y - 15);
+      ctx.lineTo(center.x, center.y + 15);
+      ctx.stroke();
+      
+      // Desenhar impactos com diferentes cores baseadas na idade
+      const pixelsPerCm = 10; // 1cm = 10 pixels
+      shots.forEach((shot, index) => {
+        const x = center.x + (shot.x * pixelsPerCm);
+        const y = center.y - (shot.y * pixelsPerCm); // Y invertido
+        
+        // Cor baseada na idade do disparo
+        const age = shots.length - index;
+        const alpha = Math.max(0.3, 1 - (age * 0.1));
+        
+        ctx.beginPath();
+        ctx.arc(x, y, 4, 0, 2 * Math.PI);
+        ctx.fillStyle = index === shots.length - 1 ? '#ff0000' : `rgba(255, 0, 0, ${alpha})`;
+        ctx.fill();
+        ctx.strokeStyle = '#800000';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        
+        // Número do disparo
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 10px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText((index + 1).toString(), x, y + 3);
+      });
+      
+      // Linha conectando os pontos (grupo)
+      if (shots.length > 1) {
+        ctx.strokeStyle = 'rgba(0, 100, 255, 0.5)';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([3, 3]);
+        ctx.beginPath();
+        shots.forEach((shot, index) => {
+          const x = center.x + (shot.x * pixelsPerCm);
+          const y = center.y - (shot.y * pixelsPerCm);
+          if (index === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    }
+    
+    function simulateShot() {
+      const distance = parseFloat(document.getElementById("distance").value);
+      const wind = parseFloat(document.getElementById("wind").value);
+      const temperature = parseFloat(document.getElementById("temperature").value);
+      const humidity = parseFloat(document.getElementById("humidity").value);
+      const offsetX = parseFloat(document.getElementById("offsetX").value);
+      const offsetY = parseFloat(document.getElementById("offsetY").value);
+      const caliber = document.getElementById("caliber").value;
+      const bulletWeight = parseFloat(document.getElementById("bulletWeight").value);
+      
+      // Cálculos balísticos mais realistas
+      const caliberInfo = caliberData[caliber];
+      const tempFactor = 1 + ((temperature - 15) * 0.002); // Efeito da temperatura
+      const humidityFactor = 1 - (humidity * 0.0002); // Efeito da humidade
+      const velocityFactor = tempFactor * humidityFactor;
+      
+      // Deriva do vento (mais complexa)
+      const windDrift = (wind * distance * distance) / (caliberInfo.velocity * caliberInfo.bc * 100);
+      
+      // Dispersão natural da arma (baseada no calibre)
+      const naturalDispersion = caliberInfo.bc * 0.5;
+      const randomX = (Math.random() - 0.5) * naturalDispersion;
+      const randomY = (Math.random() - 0.5) * naturalDispersion;
+      
+      // Efeito do peso do projétil
+      const weightFactor = bulletWeight / caliberInfo.weight;
+      const weightEffect = (1 - weightFactor) * 0.2;
+      
+      const finalX = offsetX + windDrift + randomX + weightEffect;
+      const finalY = offsetY + randomY;
+      
+      const shot = {
+        x: finalX,
+        y: finalY,
+        number: ++shotCounter,
+        distance: Math.sqrt(finalX * finalX + finalY * finalY),
+        score: calculateScore(finalX, finalY),
+        conditions: { wind, temperature, humidity, caliber }
+      };
+      
+      shots.push(shot);
+      updateDisplay();
+      playGunSound();
+      showNotification(`Disparo ${shot.number}: ${shot.distance.toFixed(1)}cm do centro - ${shot.score} pontos`);
+    }
+    
+    function burstFire() {
+      const count = parseInt(document.getElementById("burstCount").value);
+      let fired = 0;
+      
+      const fireNext = () => {
+        if (fired < count) {
+          simulateShot();
+          fired++;
+          setTimeout(fireNext, 300); // 300ms entre disparos
+        }
+      };
+      
+      fireNext();
+    }
+    
+    function calculateScore(x, y) {
+      const distance = Math.sqrt(x * x + y * y);
+      if (distance <= 0.5) return 10;
+      if (distance <= 1.0) return 9;
+      if (distance <= 2.0) return 8;
+      if (distance <= 4.0) return 7;
+      if (distance <= 8.0) return 6;
+      if (distance <= 12.0) return 5;
+      if (distance <= 16.0) return 4;
+      if (distance <= 20.0) return 3;
+      return distance <= 25.0 ? 2 : 1;
+    }
+    
+    function updateDisplay() {
+      const ctx = document.getElementById("targetCanvas").getContext("2d");
+      drawTarget(ctx);
+      updateStats();
+      updateShotList();
+      
+      if (shots.length > 0) {
+        const lastShot = shots[shots.length - 1];
+        document.getElementById("lastShotInfo").innerHTML = 
+          `<span style="color: #e74c3c;">Último Disparo:</span> X=${lastShot.x.toFixed(1)}cm, Y=${lastShot.y.toFixed(1)}cm<br>
+           <span style="color: #27ae60;">Distância do centro:</span> ${lastShot.distance.toFixed(1)}cm - <strong>${lastShot.score} pontos</strong>`;
+      }
+    }
+    
+    function updateStats() {
+      if (shots.length === 0) {
+        document.getElementById("totalShots").textContent = "0";
+        document.getElementById("groupSize").textContent = "-";
+        document.getElementById("avgX").textContent = "-";
+        document.getElementById("avgY").textContent = "-";
+        document.getElementById("stdDev").textContent = "-";
+        document.getElementById("bestShot").textContent = "-";
+        return;
+      }
+      
+      const totalShots = shots.length;
+      const avgX = shots.reduce((sum, shot) => sum + shot.x, 0) / totalShots;
+      const avgY = shots.reduce((sum, shot) => sum + shot.y, 0) / totalShots;
+      
+      // Tamanho do grupo (maior distância entre dois pontos)
+      let maxDistance = 0;
+      for (let i = 0; i < shots.length; i++) {
+        for (let j = i + 1; j < shots.length; j++) {
+          const distance = Math.sqrt(
+            Math.pow(shots[i].x - shots[j].x, 2) + 
+            Math.pow(shots[i].y - shots[j].y, 2)
+          );
+          maxDistance = Math.max(maxDistance, distance);
+        }
+      }
+      
+      // Desvio padrão
+      const variance = shots.reduce((sum, shot) => 
+        sum + Math.pow(shot.distance, 2), 0) / totalShots;
+      const stdDev = Math.sqrt(variance);
+      
+      // Melhor disparo
+      const bestShot = shots.reduce((best, shot) => 
+        shot.distance < best.distance ? shot : best, shots[0]);
+      
+      document.getElementById("totalShots").textContent = totalShots;
+      document.getElementById("groupSize").textContent = maxDistance.toFixed(1) + "cm";
+      document.getElementById("avgX").textContent = avgX.toFixed(1) + "cm";
+      document.getElementById("avgY").textContent = avgY.toFixed(1) + "cm";
+      document.getElementById("stdDev").textContent = stdDev.toFixed(1) + "cm";
+      document.getElementById("bestShot").textContent = bestShot.distance.toFixed(1) + "cm";
+    }
+    
+    function updateShotList() {
+      const shotList = document.getElementById("shotList");
+      shotList.innerHTML = "";
+      
+      shots.slice().reverse().forEach((shot, index) => {
+        const div = document.createElement("div");
+        div.className = "shot-item";
+        div.innerHTML = `
+          <span>#${shot.number}</span>
+          <span>${shot.distance.toFixed(1)}cm (${shot.score}pts)</span>
+        `;
+        shotList.appendChild(div);
+      });
+    }
+    
+    function clearShots() {
+      shots = [];
+      shotCounter = 0;
+      updateDisplay();
+      document.getElementById("lastShotInfo").innerHTML = "";
+      showNotification("Alvo limpo - Nova sessão iniciada");
+    }
+    
+    function toggleStats() {
+      const statsPanel = document.querySelector('.stats-panel');
+      statsPanel.style.display = statsPanel.style.display === 'none' ? 'block' : 'none';
+    }
+    
+    function showNotification(message) {
+      const notification = document.getElementById("notification");
+      notification.textContent = message;
+      notification.classList.add("show");
+      
+      setTimeout(() => {
+        notification.classList.remove("show");
+      }, 3000);
+    }
+    
+    // Sistema de som aprimorado
+    function playGunSound() {
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        // Som principal (impacto)
+        const oscillator1 = audioCtx.createOscillator();
+        const gain1 = audioCtx.createGain();
+        
+        oscillator1.type = 'square';
+        oscillator1.frequency.setValueAtTime(150, audioCtx.currentTime);
+        oscillator1.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.1);
+        
+        gain1.gain.setValueAtTime(0.8, audioCtx.currentTime);
+        gain1.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+        
+        oscillator1.connect(gain1);
+        gain1.connect(audioCtx.destination);
+        
+        oscillator1.start();
+        oscillator1.stop(audioCtx.currentTime + 0.15);
+        
+        // Som secundário (eco)
+        setTimeout(() => {
+          const oscillator2 = audioCtx.createOscillator();
+          const gain2 = audioCtx.createGain();
+          
+          oscillator2.type = 'sine';
+          oscillator2.frequency.setValueAtTime(80, audioCtx.currentTime);
+          
+          gain2.gain.setValueAtTime(0.3, audioCtx.currentTime);
+          gain2.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+          
+          oscillator2.connect(gain2);
+          gain2.connect(audioCtx.destination);
+          
+          oscillator2.start();
+          oscillator2.stop(audioCtx.currentTime + 0.3);
+        }, 100);
+        
+      } catch (e) {
+        console.log("Áudio não suportado");
+      }
+    }
+    
+    // Atalhos de teclado
+    document.addEventListener('keydown', (e) => {
+      if (e.code === 'Space') {
+        e.preventDefault();
+        simulateShot();
+      } else if (e.code === 'KeyC' && e.ctrlKey) {
+        e.preventDefault();
+        clearShots();
+      }
+    });
+    
+    // Inicialização
+    document.addEventListener('DOMContentLoaded', () => {
+      const ctx = document.getElementById("targetCanvas").getContext("2d");
+      drawTarget(ctx);
+      showNotification("Simulador carregado - Pressione ESPAÇO para disparar");
+    });
+  </script>
+</body>
+</html>
