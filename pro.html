@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <title>Simulador Benchrest Pro</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      background: #111;
+      color: #fff;
+      font-family: sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+    }
+
+    canvas {
+      border: 2px solid #444;
+      background: #fff;
+      margin-top: 10px;
+      max-width: 100%;
+      height: auto;
+      cursor: crosshair;
+    }
+
+    #painel {
+      padding: 10px;
+    }
+
+    #painel button {
+      padding: 10px 20px;
+      margin: 10px 5px;
+      background: #333;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+      border-radius: 5px;
+    }
+
+    #painel button:hover {
+      background: #555;
+    }
+
+    #painel pre {
+      text-align: left;
+      max-height: 200px;
+      overflow-y: auto;
+      background: #222;
+      padding: 10px;
+      color: #0f0;
+      border: 1px solid #444;
+      margin: 10px auto;
+      max-width: 90%;
+    }
+  </style>
+</head>
+<body>
+  <h1>🏆 Simulador Benchrest Pro</h1>
+
+  <canvas id="alvoCanvas" width="900" height="700"></canvas>
+
+  <div id="painel">
+    <div>Tiros: <span id="contador">0</span> | Pontos Totais: <span id="pontos">0</span></div>
+    <button onclick="reiniciar()">🔄 Reiniciar</button>
+    <button onclick="exportarCSV()">⬇️ Exportar CSV</button>
+    <pre id="historico"></pre>
+  </div>
+
+  <!-- Som do disparo -->
+  <audio id="somTiro" src="https://www.soundjay.com/mechanical/sounds/gun-gunshot-01.mp3" preload="auto"></audio>
+
+  <script>
+    const canvas = document.getElementById("alvoCanvas");
+    const ctx = canvas.getContext("2d");
+    const contador = document.getElementById("contador");
+    const pontosTotal = document.getElementById("pontos");
+    const historicoDiv = document.getElementById("historico");
+    const somTiro = document.getElementById("somTiro");
+
+    let tiros = 0;
+    let pontos = 0;
+    const tirosPorAlvo = {};
+    const todosOsTiros = [];
+
+    const raio = 25;
+    const espacamento = 120;
+    const startX = 100;
+    const startY = 50;
+    const alvos = [];
+
+    function desenharAlvo(x, y, radius, label = "") {
+      for (let r = radius; r > 0; r -= radius / 3) {
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.strokeStyle = "#000";
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+      ctx.fillStyle = "#000";
+      ctx.font = "bold 12px Arial";
+      ctx.textAlign = "center";
+      ctx.fillText(label, x, y + radius + 15);
+    }
+
+    function desenharTodosOsAlvos() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      alvos.length = 0;
+
+      let count = 1;
+      for (let row = 0; row < 5; row++) {
+        for (let col = 0; col < 5; col++) {
+          const x = startX + col * espacamento;
+          const y = startY + row * espacamento;
+          desenharAlvo(x, y, raio, count.toString());
+          alvos.push({ x, y, label: count });
+          count++;
+        }
+      }
+
+      for (let i = 0; i < 5; i++) {
+        desenharAlvo(30, startY + i * espacamento, raio, "S");
+        desenharAlvo(870, startY + i * espacamento, raio, "S");
+      }
+    }
+
+    function marcarTiro(x, y, pontos) {
+      ctx.beginPath();
+      ctx.arc(x, y, 4, 0, Math.PI * 2);
+      ctx.fillStyle = "red";
+      ctx.fill();
+
+      ctx.fillStyle = "#000";
+      ctx.font = "bold 12px Arial";
+      ctx.fillText(pontos, x + 12, y - 12);
+    }
+
+    function calcularPontuacao(dist) {
+      if (dist <= 5) return 10;
+      if (dist <= 10) return 9;
+      if (dist <= 15) return 8;
+      if (dist <= 20) return 7;
+      if (dist <= 25) return 6;
+      return 0;
+    }
+
+    function atualizarHistorico() {
+      let output = "";
+      for (const [alvo, pontuacoes] of Object.entries(tirosPorAlvo)) {
+        const soma = pontuacoes.reduce((a, b) => a + b, 0);
+        output += `Alvo ${alvo}: [ ${pontuacoes.join(", ")} ] → ${soma} pontos\n`;
+      }
+      historicoDiv.textContent = output;
+    }
+
+    canvas.addEventListener("click", (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      // Som do disparo
+      somTiro.currentTime = 0;
+      somTiro.play();
+
+      let alvoMaisProximo = null;
+      let menorDist = Infinity;
+
+      for (const alvo of alvos) {
+        const dx = x - alvo.x;
+        const dy = y - alvo.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (dist < menorDist) {
+          menorDist = dist;
+          alvoMaisProximo = alvo;
+        }
+      }
+
+      const pontuacao = calcularPontuacao(menorDist);
+      if (pontuacao > 0) {
+        const id = alvoMaisProximo.label;
+        if (!tirosPorAlvo[id]) tirosPorAlvo[id] = [];
+        tirosPorAlvo[id].push(pontuacao);
+      }
+
+      todosOsTiros.push({ alvo: alvoMaisProximo.label, x, y, pontos: pontuacao });
+      pontos += pontuacao;
+      tiros++;
+
+      marcarTiro(x, y, pontuacao);
+      contador.textContent = tiros;
+      pontosTotal.textContent = pontos;
+      atualizarHistorico();
+    });
+
+    function reiniciar() {
+      tiros = 0;
+      pontos = 0;
+      todosOsTiros.length = 0;
+      Object.keys(tirosPorAlvo).forEach(k => delete tirosPorAlvo[k]);
+      desenharTodosOsAlvos();
+      contador.textContent = "0";
+      pontosTotal.textContent = "0";
+      historicoDiv.textContent = "";
+    }
+
+    function exportarCSV() {
+      let csv = "Alvo,X,Y,Pontos\n";
+      for (const tiro of todosOsTiros) {
+        csv += `${tiro.alvo},${tiro.x.toFixed(1)},${tiro.y.toFixed(1)},${tiro.pontos}\n`;
+      }
+
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "resultados_benchrest.csv";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    desenharTodosOsAlvos();
+  </script>
+</body>
+</html>
